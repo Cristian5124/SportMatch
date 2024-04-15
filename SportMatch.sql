@@ -27,10 +27,10 @@ CREATE TABLE Tarifas (
 
 CREATE TABLE Canchas (
     IDCancha CHAR(6) NOT NULL,
+    IDZona CHAR(6) NOT NULL,
     capacidadJugadores NUMBER(2) NOT NULL,
     estado VARCHAR(15) NOT NULL,
     dimensiones VARCHAR(40) NOT NULL,
-    IDZona CHAR(6) NOT NULL,
     descripcion	VARCHAR(80) NOT NULL,
     deporte	VARCHAR(15) NOT NULL,
     idTarifa CHAR(6) NOT NULL
@@ -38,7 +38,7 @@ CREATE TABLE Canchas (
 
 CREATE TABLE AdicionalesPorReservaciones (
     IDAdicional CHAR(6) NOT NULL,
-    IDReserva CHAR(6) NOT NULL
+    IDReserva CHAR(6)
 );
 
 CREATE TABLE Adicionales (
@@ -62,6 +62,7 @@ CREATE TABLE Reservaciones (
     tidJugador CHAR(2) NOT NULL,
     nidJugador VARCHAR(10) NOT NULL,
     IDCancha CHAR(6),
+    IDZona CHAR(6),
     IDPartido CHAR(6),
     IDPago CHAR(12) NOT NULL
 );
@@ -69,9 +70,7 @@ CREATE TABLE Reservaciones (
 CREATE TABLE Pagos (
     IDPago CHAR(12) NOT NULL,
     estado VARCHAR(15) NOT NULL,
-    metodo VARCHAR(25) NOT NULL,
-    total DECIMAL(10,2) NOT NULL,
-    fechalimite DATE NOT NULL
+    metodo VARCHAR(25) NOT NULL
 );
 
 CREATE TABLE ZonasDeportivas (
@@ -97,7 +96,9 @@ CREATE TABLE Calificaciones (
     tidJugador CHAR(2) NOT NULL,
     nidJugador VARCHAR(10) NOT NULL,
     calificacion NUMBER(1) NOT NULL,
-    feedback VARCHAR(80) NOT NULL
+    feedback VARCHAR(80) NOT NULL,
+    tidEncargado CHAR(2) NOT NULL,
+    nidEncargado VARCHAR(10) NOT NULL
 );
 
 CREATE TABLE Jugadores (
@@ -107,7 +108,7 @@ CREATE TABLE Jugadores (
     apellido VARCHAR(20) NOT NULL,
     correo VARCHAR(30),
     sexo VARCHAR(15) NOT NULL,
-    IDEquipo CHAR(6) NOT NULL
+    IDEquipo CHAR(6)
 );
 
 CREATE TABLE TelefonosPorJugador (
@@ -130,7 +131,7 @@ CREATE TABLE EquiposJueganPartidos (
 --Llaves Primarias (PK)
 
 ALTER TABLE Tarifas ADD CONSTRAINT PK_Tarifas PRIMARY KEY(IDTarifa);
-ALTER TABLE Canchas ADD CONSTRAINT PK_Canchas PRIMARY KEY(IDCancha);
+ALTER TABLE Canchas ADD CONSTRAINT PK_Canchas PRIMARY KEY(IDCancha, IDZona);
 ALTER TABLE AdicionalesPorReservaciones ADD CONSTRAINT PK_AdicionalesPorReservaciones PRIMARY KEY(IDAdicional, IDReserva);
 ALTER TABLE Adicionales ADD CONSTRAINT PK_Adicionales PRIMARY KEY(IDAdicional);
 ALTER TABLE Partidos ADD CONSTRAINT PK_Partidos PRIMARY KEY(IDPartido);
@@ -138,6 +139,7 @@ ALTER TABLE Reservaciones ADD CONSTRAINT PK_Reservaciones PRIMARY KEY(IDReserva)
 ALTER TABLE Pagos ADD CONSTRAINT PK_pagos PRIMARY KEY(IDPago);
 ALTER TABLE ZonasDeportivas ADD CONSTRAINT PK_ZonasDeportivas PRIMARY KEY(IDZona);
 ALTER TABLE Encargados ADD CONSTRAINT PK_Encargados PRIMARY KEY(tidJugador, nidJugador);
+ALTER TABLE Calificaciones ADD CONSTRAINT PK_Calificaciones PRIMARY KEY(tidJugador, nidJugador, tidEncargado, nidEncargado);
 ALTER TABLE Jugadores ADD CONSTRAINT PK_Jugadores PRIMARY KEY(tid, nid);
 ALTER TABLE TelefonosPorJugador ADD CONSTRAINT PK_TelefonosPorJugador PRIMARY KEY(tidJugador, nidJugador, telefono);
 ALTER TABLE Equipos ADD CONSTRAINT PK_Equipos PRIMARY KEY(IDEquipo);
@@ -153,101 +155,97 @@ ALTER TABLE Equipos ADD CONSTRAINT UK_Equipos UNIQUE(nombre);
 --Llaves Foraneas (FK)
 
 ALTER TABLE Canchas ADD CONSTRAINT FK_Canchas_Tarifas FOREIGN KEY(idTarifa) REFERENCES Tarifas(IDTarifa);
-ALTER TABLE Canchas ADD CONSTRAINT FK_Canchas_ZonasDeportivas FOREIGN KEY(IDZona) REFERENCES ZonasDeportivas(IDZona);
-ALTER TABLE AdicionalesPorReservaciones ADD CONSTRAINT FK_AdicionalesPorReservaciones_Adicionales FOREIGN KEY(IDAdicional) REFERENCES Adicionales(IDAdicional);
-ALTER TABLE AdicionalesPorReservaciones ADD CONSTRAINT FK_AdicionalesPorReservaciones_Reservaciones FOREIGN KEY(IDReserva) REFERENCES Reservaciones(IDReserva);
-ALTER TABLE Reservaciones ADD CONSTRAINT FK_Reservaciones_Jugadores FOREIGN KEY(tidJugador, nidJugador) REFERENCES Jugadores(tid, nid);
-ALTER TABLE Reservaciones ADD CONSTRAINT FK_Reservaciones_Canchas FOREIGN KEY(IDCancha) REFERENCES Canchas(IDCancha);
-ALTER TABLE Reservaciones ADD CONSTRAINT FK_Reservaciones_Partidos FOREIGN KEY(IDPartido) REFERENCES Partidos(IDPartido);
-ALTER TABLE Reservaciones ADD CONSTRAINT FK_Reservaciones_Pagos FOREIGN KEY(IDPago) REFERENCES Pagos(IDPago);
-ALTER TABLE Encargados ADD CONSTRAINT FK_Encargados_Jugadores FOREIGN KEY(tidJugador, nidJugador) REFERENCES Jugadores(tid, nid);
-ALTER TABLE Calificaciones ADD CONSTRAINT FK_Calificaciones_Encargados FOREIGN KEY(tidJugador, nidJugador) REFERENCES Encargados(tidJugador, nidJugador);
-ALTER TABLE Jugadores ADD CONSTRAINT FK_Jugadores_Equipos FOREIGN KEY(IDEquipo) REFERENCES Equipos(IDEquipo);
-ALTER TABLE TelefonosPorJugador ADD CONSTRAINT FK_TelefonosPorJugador_Jugadores FOREIGN KEY(tidJugador, nidJugador) REFERENCES Jugadores(tid, nid);
-ALTER TABLE EquiposJueganPartidos ADD CONSTRAINT FK_EquiposJueganPartidos_Equipos FOREIGN KEY(IDEquipo) REFERENCES Equipos(IDEquipo);
-ALTER TABLE EquiposJueganPartidos ADD CONSTRAINT FK_EquiposJueganPartidos_Partidos FOREIGN KEY(IDPartido) REFERENCES Partidos(IDPartido);
+ALTER TABLE Canchas ADD CONSTRAINT FK_Canchas_ZonasDeportivas FOREIGN KEY(IDZona) REFERENCES ZonasDeportivas(IDZona) ON DELETE CASCADE;
+ALTER TABLE AdicionalesPorReservaciones ADD CONSTRAINT FK_AdicionalesPorReservaciones_Adicionales FOREIGN KEY(IDAdicional) REFERENCES Adicionales(IDAdicional) ON DELETE CASCADE;
+ALTER TABLE AdicionalesPorReservaciones ADD CONSTRAINT FK_AdicionalesPorReservaciones_Reservaciones FOREIGN KEY(IDReserva) REFERENCES Reservaciones(IDReserva) ON DELETE SET NULL;
+ALTER TABLE Reservaciones ADD CONSTRAINT FK_Reservaciones_Jugadores FOREIGN KEY(tidJugador, nidJugador) REFERENCES Jugadores(tid, nid) ON DELETE CASCADE;
+ALTER TABLE Reservaciones ADD CONSTRAINT FK_Reservaciones_Canchas FOREIGN KEY(IDCancha, IDZona) REFERENCES Canchas(IDCancha, IDZona) ON DELETE SET NULL;
+ALTER TABLE Reservaciones ADD CONSTRAINT FK_Reservaciones_Partidos FOREIGN KEY(IDPartido) REFERENCES Partidos(IDPartido) ON DELETE SET NULL;
+ALTER TABLE Reservaciones ADD CONSTRAINT FK_Reservaciones_Pagos FOREIGN KEY(IDPago) REFERENCES Pagos(IDPago) ON DELETE CASCADE;
+ALTER TABLE Encargados ADD CONSTRAINT FK_Encargados_Jugadores FOREIGN KEY(tidJugador, nidJugador) REFERENCES Jugadores(tid, nid) ON DELETE CASCADE;
+ALTER TABLE Encargados ADD CONSTRAINT FK_Encargados_ZonasDeportivas FOREIGN KEY(IDZona) REFERENCES ZonasDeportivas(IDZona);
+ALTER TABLE Calificaciones ADD CONSTRAINT FK_Calificaciones_Jugadores FOREIGN KEY(tidJugador, nidJugador) REFERENCES Jugadores(tid, nid) ON DELETE CASCADE;
+ALTER TABLE Calificaciones ADD CONSTRAINT FK_Calificaciones_Encargados FOREIGN KEY(tidEncargado, nidEncargado) REFERENCES Encargados(tidJugador, nidJugador) ON DELETE CASCADE;
+ALTER TABLE Jugadores ADD CONSTRAINT FK_Jugadores_Equipos FOREIGN KEY(IDEquipo) REFERENCES Equipos(IDEquipo) ON DELETE SET NULL;
+ALTER TABLE TelefonosPorJugador ADD CONSTRAINT FK_TelefonosPorJugador_Jugadores FOREIGN KEY(tidJugador, nidJugador) REFERENCES Jugadores(tid, nid) ON DELETE CASCADE;
+ALTER TABLE EquiposJueganPartidos ADD CONSTRAINT FK_EquiposJueganPartidos_Equipos FOREIGN KEY(IDEquipo) REFERENCES Equipos(IDEquipo) ON DELETE CASCADE;
+ALTER TABLE EquiposJueganPartidos ADD CONSTRAINT FK_EquiposJueganPartidos_Partidos FOREIGN KEY(IDPartido) REFERENCES Partidos(IDPartido) ON DELETE CASCADE;
 
 --Atributos
 
-ALTER TABLE Tarifas ADD CONSTRAINT TNumeroTarifa CHECK (IDTarifa like '[A-Z][A-Z][A-Z][0-9][0-9][0-9]');
+ALTER TABLE Tarifas ADD CONSTRAINT CK_Tarifas_IDTarifa CHECK (REGEXP_LIKE(IDTarifa,'^([A-Z]{3})([0-9]{3})'));
 
-ALTER TABLE Tarifas ADD CONSTRAINT TDia CHECK (dia IN ('Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo', 'Festivo'));
-/*
-ALTER TABLE Tarifas ADD CONSTRAINT THoraInicio CHECK (horaInicio LIKE('[0-9]:[0-9][0-9]') OR horaInicio LIKE ('[0-9][0-9]:[0-9][0-9]'));
+ALTER TABLE Tarifas ADD CONSTRAINT CK_Tarifas_dia CHECK (dia IN ('Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo', 'Festivo'));
 
-ALTER TABLE Tarifas ADD CONSTRAINT THoraFin CHECK (horaFin LIKE('[0-9]:[0-9][0-9]') OR horaFin LIKE ('[0-9][0-9]:[0-9][0-9]'));
-*/
-ALTER TABLE Tarifas ADD CONSTRAINT TMonedaTarifa CHECK (precio > 0);
+ALTER TABLE Tarifas ADD CONSTRAINT CK_Tarifas_horaInicio CHECK (REGEXP_LIKE(horaInicio,'^([0-9]{1,2})(:)([0-5]{1})([0-9]{1})'));
 
-ALTER TABLE Canchas ADD CONSTRAINT TNumeroCancha CHECK (IDCancha like ('[A-Z][A-Z][A-Z][0-9][0-9][0-9]'));
+ALTER TABLE Tarifas ADD CONSTRAINT CK_Tarifas_HoraFin CHECK (REGEXP_LIKE(horaFin,'^([0-9]{1,2})(:)([0-5]{1})([0-9]{1})'));
 
-ALTER TABLE Canchas ADD CONSTRAINT TCapacidad CHECK (capacidadJugadores > 0);
+ALTER TABLE Tarifas ADD CONSTRAINT CK_Tarifas_precio CHECK (precio > 0);
 
-ALTER TABLE Canchas ADD CONSTRAINT TEstadoCancha CHECK (estado in ('Activa', 'Mantenimiento', 'Inactiva'));
+ALTER TABLE Canchas ADD CONSTRAINT CK_Canchas_IDCancha CHECK (REGEXP_LIKE(IDCancha,'^([A-Z]{3})([0-9]{3})'));
 
-ALTER TABLE Canchas ADD CONSTRAINT TAreaCancha CHECK (dimensiones like ('%[0-9]m * %[0-9]m'));
+ALTER TABLE Canchas ADD CONSTRAINT CK_Canchas_capacidadJugadores CHECK (capacidadJugadores > 0);
 
+ALTER TABLE Canchas ADD CONSTRAINT CK_Canchas_estado CHECK (estado in ('Activa', 'Mantenimiento', 'Inactiva'));
 
+ALTER TABLE Canchas ADD CONSTRAINT CK_Canchas_dimensiones CHECK (REGEXP_LIKE(dimensiones,'^([0-9]{1,4})(m)(\s)(\*)(\s)([0-9]{1,4})(m)'));
 
-ALTER TABLE Canchas ADD CONSTRAINT TDeporte CHECK (deporte in ('Futbol', 'Microfutbol', 'Baloncesto', 'Tennis', 'Volleyball', 'Baseball', 'Softball', 'Padel', 'Badminton', 'Atletismo'));
+ALTER TABLE Canchas ADD CONSTRAINT CK_Canchas_deporte CHECK (deporte in ('Futbol', 'Microfutbol', 'Baloncesto', 'Tennis', 'Volleyball', 'Baseball', 'Softball', 'Padel', 'Badminton', 'Atletismo'));
 
-ALTER TABLE Adicionales ADD CONSTRAINT TAdicional CHECK (IDAdicional like ('AD[0-9][0-9][0-9][0-9]'));
+ALTER TABLE Adicionales ADD CONSTRAINT CK_Adicionales_IDAdicional CHECK (REGEXP_LIKE(IDAdicional,'^(AD)([0-9]{4})'));
 
-ALTER TABLE Adicionales ADD CONSTRAINT TCantidad CHECK (cantidad > 0);
+ALTER TABLE Adicionales ADD CONSTRAINT CK_Adicionales_cantidad CHECK (cantidad > 0);
 
-ALTER TABLE Adicionales ADD CONSTRAINT TPrecio CHECK (precio > 0);
+ALTER TABLE Adicionales ADD CONSTRAINT CK_Adicionales_precio CHECK (precio > 0);
 
-ALTER TABLE Adicionales ADD CONSTRAINT TDisponibilidad CHECK (disponibilidad in (0, 1));
+ALTER TABLE Adicionales ADD CONSTRAINT CK_Adicionales_disponibilidad CHECK (disponibilidad in (0, 1));
 
-ALTER TABLE Partidos ADD CONSTRAINT TNumeroPartido CHECK (IDPartido like ('[A-Z][A-Z][A-Z][0-9][0-9][0-9]'));
+ALTER TABLE Partidos ADD CONSTRAINT CK_Partidos_IDPartido CHECK (REGEXP_LIKE(IDPartido,'^([A-Z]{3})([0-9]{3})'));
 
-ALTER TABLE Partidos ADD CONSTRAINT TResultado CHECK (resultado like ('%[0-9]-[0-9]%'));
+ALTER TABLE Partidos ADD CONSTRAINT CK_Partidos_resultado CHECK (REGEXP_LIKE(resultado,'^([0-9]{1,3})(-)([0-9]{1,3})'));
 
-ALTER TABLE Reservaciones ADD CONSTRAINT TNumeroReservacion CHECK (IDReserva like ('[A-Z][A-Z][A-Z][0-9][0-9][0-9]'));
+ALTER TABLE Reservaciones ADD CONSTRAINT CK_Reservaciones_IDReserva CHECK (REGEXP_LIKE(IDReserva,'^([A-Z]{3})([0-9]{3})'));
 
-ALTER TABLE Reservaciones ADD CONSTRAINT TEstadoReserva CHECK (estado in ('Hecha', 'Cumplida', 'Cancelada', 'Procesando'));
+ALTER TABLE Reservaciones ADD CONSTRAINT CK_Reservaciones_estado CHECK (estado in ('Hecha', 'Cumplida', 'Cancelada', 'Procesando'));
 
-ALTER TABLE Reservaciones ADD CONSTRAINT TFechaSolicitud CHECK (fechaSolicitud <= SYSDATE);
+ALTER TABLE Reservaciones ADD CONSTRAINT CK_Reservaciones_tiempoTotal CHECK (REGEXP_LIKE(tiempoTotal,'^([0-9]{1,2})(:)([0-5]{1})([0-9]{1})(\s)(h)'));
 
-ALTER TABLE Reservaciones ADD CONSTRAINT TFechaReservacion CHECK (fechaReservacion >= SYSDATE);
+ALTER TABLE Pagos ADD CONSTRAINT CK_Pagos_IDPago CHECK (REGEXP_LIKE(IDPago,'^([0-9]{12})'));
 
-ALTER TABLE Reservaciones ADD CONSTRAINT TTiempo CHECK (tiempoTotal like ('%[0-9]:[0-9][0-9]%h'));
+ALTER TABLE Pagos ADD CONSTRAINT CK_Pagos_estado CHECK (estado in ('Aprobado', 'Rechazado', 'Procesando'));
 
-ALTER TABLE Pagos ADD CONSTRAINT TComprobante CHECK (IDPago like ('[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'));
+ALTER TABLE Pagos ADD CONSTRAINT CK_Pagos_metodo CHECK (metodo in ('Efectivo', 'Tarjeta de Credito', 'Tarjeta de Debito', 'Transferencia', 'PSE'));
 
-ALTER TABLE Pagos ADD CONSTRAINT TEstadoPago CHECK (estado in ('Aprobado', 'Rechazado', 'Procesando'));
+ALTER TABLE ZonasDeportivas ADD CONSTRAINT CK_ZonasDeportivas_IDZona CHECK (REGEXP_LIKE(IDZona,'^([A-Z]{3})([0-9]{3})'));
 
-ALTER TABLE Pagos ADD CONSTRAINT TMetodoPago CHECK (metodo in ('Efectivo', 'Tarjeta de Credito', 'Tarjeta de Debito', 'Transferencia', 'PSE'));
+ALTER TABLE ZonasDeportivas ADD CONSTRAINT CK_ZonasDeportivas_cantidadCanchas CHECK (cantidadCanchas >= 0);
 
-ALTER TABLE ZonasDeportivas ADD CONSTRAINT TZona CHECK (IDZona like ('[A-Z][A-Z][A-Z][0-9][0-9][0-9]'));
+ALTER TABLE ZonasDeportivas ADD CONSTRAINT CK_ZonasDeportivas_direccion CHECK (direccion like ('%#%-%'));
 
-ALTER TABLE ZonasDeportivas ADD CONSTRAINT TCantidadCanchas CHECK (cantidadCanchas >= 0);
+ALTER TABLE ZonasDeportivas ADD CONSTRAINT CK_ZonasDeportivas_area CHECK (REGEXP_LIKE(area,'^([0-9]{1,4})(m)(\s)(\*)(\s)([0-9]{1,4})(m)'));
 
-ALTER TABLE ZonasDeportivas ADD CONSTRAINT TDireccion CHECK (direccion like ('%#%-%'));
+--ALTER TABLE Encargados ADD CONSTRAINT CK_Encargados_fechaContratacion CHECK (fechaContratacion <= SYSDATE);
 
-ALTER TABLE ZonasDeportivas ADD CONSTRAINT TAreaZona CHECK (area like ('%[0-9]m * %[0-9]m'));
+ALTER TABLE Encargados ADD CONSTRAINT CK_Encargados_foto CHECK (foto like ('https://%.%'));
 
-ALTER TABLE Encargados ADD CONSTRAINT TFechaContratacion CHECK (fechaContratacion <= SYSDATE);
+ALTER TABLE Encargados ADD CONSTRAINT CK_Encargados_aniosExperiencia CHECK (aniosExperiencia >= 0);
 
-ALTER TABLE Encargados ADD CONSTRAINT TFoto CHECK (foto like ('https://%.%/%.[a-z][a-z][a-z]%'));
+ALTER TABLE Calificaciones ADD CONSTRAINT CK_Calificaciones_calificacion CHECK (calificacion in (0, 1, 2, 3, 4, 5));
 
-ALTER TABLE Encargados ADD CONSTRAINT TExperiencia CHECK (aniosExperiencia >= 0);
+ALTER TABLE Jugadores ADD CONSTRAINT CK_Jugadores_tid CHECK (tid in ('CC', 'TI', 'CE', 'PA'));
 
-ALTER TABLE Calificaciones ADD CONSTRAINT TCalificacion CHECK (calificacion in (0, 1, 2, 3, 4, 5));
+ALTER TABLE Jugadores ADD CONSTRAINT CK_Jugadores_nid CHECK (REGEXP_LIKE(nid,'^([1-9]{1})([0-9]{9})'));
 
-ALTER TABLE Jugadores ADD CONSTRAINT TID CHECK (tid in ('CC', 'TI', 'CE', 'PA'));
+ALTER TABLE Jugadores ADD CONSTRAINT CK_Jugadores_correo CHECK (correo like ('%@%.%'));
 
-ALTER TABLE Jugadores ADD CONSTRAINT TNid CHECK (nid like ('[1-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'));
+ALTER TABLE Jugadores ADD CONSTRAINT CK_Jugadores_sexo CHECK (sexo in ('Masculino', 'Femenino'));
 
-ALTER TABLE Jugadores ADD CONSTRAINT TCorreo CHECK (correo like ('%@%.%'));
+ALTER TABLE TelefonosPorJugador ADD CONSTRAINT CK_TelefonosPorJugador_telefono CHECK (telefono >= 1000000000);
 
-ALTER TABLE Jugadores ADD CONSTRAINT TSexo CHECK (sexo in ('Masculino', 'Femenino'));
+ALTER TABLE Equipos ADD CONSTRAINT CK_Equipos_IDEquipo CHECK (REGEXP_LIKE(IDEquipo,'^([A-Z]{3})([0-9]{3})'));
 
-ALTER TABLE TelefonosPorJugador ADD CONSTRAINT TTelefono CHECK (telefono >= 1000000000);
-
-ALTER TABLE Equipos ADD CONSTRAINT TNumeroEquipo CHECK (IDEquipo like ('[A-Z][A-Z][A-Z][0-9][0-9][0-9]'));
-
-ALTER TABLE Equipos ADD CONSTRAINT TNumeroIntegrantes CHECK (numeroIntegrantes >= 0);
+ALTER TABLE Equipos ADD CONSTRAINT CK_Equipos_numeroIntegrantes CHECK (numeroIntegrantes >= 0);
 
 --PoblarOK
 
@@ -260,9 +258,9 @@ insert into Tarifas (IDTarifa, dia, horaInicio, horaFin, precio) values ('TEN002
 
 --Zonas Deportivas
 
-insert into ZonasDeportivas (IDZona, nombre, cantidadCanchas, direccion, descripcion, area) values ('BOG001', 'El Campin', 15, 'Carrera 30 # 57', 'Lote de canchas sinteticas de futbol 5 al aire libre ubicado en Bogota D.C.', '105m * 68m');
-insert into ZonasDeportivas (IDZona, nombre, cantidadCanchas, direccion, descripcion, area) values ('BAQ003', 'Metropolitano', 2, 'Calle 46 # 1s - 45', 'Lote de zona para juegos de beisbol en estadio ubicado en Barranquilla.', '250m * 100m');
-insert into ZonasDeportivas (IDZona, nombre, cantidadCanchas, direccion, descripcion, area) values ('MED005', 'Atanasio Girardot', 10, 'Calle 74 # 48', 'Lote de canchas de arena para juegos de tennis en Medellin.', '75m * 45m');
+insert into ZonasDeportivas (IDZona, nombre, cantidadCanchas, direccion, descripcion, area) values ('BOG001', 'El Campin', 0, 'Carrera 30 # 57 - 09', 'Lote de canchas sinteticas de futbol 5 al aire libre ubicado en Bogota D.C.', '105m * 68m');
+insert into ZonasDeportivas (IDZona, nombre, cantidadCanchas, direccion, descripcion, area) values ('BAQ003', 'Metropolitano', 0, 'Calle 46 # 1s - 45', 'Lote de zona para juegos de beisbol en estadio ubicado en Barranquilla.', '250m * 100m');
+insert into ZonasDeportivas (IDZona, nombre, cantidadCanchas, direccion, descripcion, area) values ('MED005', 'Atanasio Girardot', 0, 'Calle 74 # 48 - 23', 'Lote de canchas de arena para juegos de tennis en Medellin.', '75m * 45m');
 
 --Canchas
 
@@ -285,9 +283,9 @@ insert into Partidos (IDPartido, resultado) values ('TEN245', '6-6');
 
 --Equipos
 
-insert into Equipos (IDEquipo, nombre, numeroIntegrantes) values ('FUT501', 'Real Madrid', 10);
-insert into Equipos (IDEquipo, nombre, numeroIntegrantes) values ('BAS009', 'Yankees', 9);
-insert into Equipos (IDEquipo, nombre, numeroIntegrantes) values ('TEN205', 'Roger Federer', 1);
+insert into Equipos (IDEquipo, nombre, numeroIntegrantes) values ('FUT501', 'Real Madrid', 0);
+insert into Equipos (IDEquipo, nombre, numeroIntegrantes) values ('BAS009', 'Yankees', 0);
+insert into Equipos (IDEquipo, nombre, numeroIntegrantes) values ('TEN205', 'Roger Federer', 0);
 
 --EquiposJueganPartidos
 
@@ -297,16 +295,16 @@ insert into EquiposJueganPartidos (IDEquipo, IDPartido) values ('TEN205', 'TEN24
 
 --Pagos
 
-insert into Pagos (IDPago, estado, metodo, total, fechalimite) values ('123456789101', 'Aprobado', 'Efectivo', 89000, TO_DATE('2024-04-01','YYYY-MM-DD'));
-insert into Pagos (IDPago, estado, metodo, total, fechalimite) values ('987654321098', 'Aprobado', 'Tarjeta de Debito', 450000.50, TO_DATE('2024-05-19','YYYY-MM-DD'));
-insert into Pagos (IDPago, estado, metodo, total, fechalimite) values ('103245069387', 'Procesando', 'Efectivo', 50000, TO_DATE('2024-04-23','YYYY-MM-DD'));
+insert into Pagos (IDPago, estado, metodo) values ('123456789101', 'Aprobado', 'Efectivo');
+insert into Pagos (IDPago, estado, metodo) values ('987654321098', 'Aprobado', 'Tarjeta de Debito');
+insert into Pagos (IDPago, estado, metodo) values ('103245069387', 'Procesando', 'Efectivo');
 
 --Jugadores
 
 insert into Jugadores (tid, nid, nombre, apellido, correo, sexo, IDEquipo) values ('CC', '1010123456', 'Armando Rafael', 'Mejia Orjuela', 'armejia052@hotmail.com', 'Masculino', 'FUT501');
 insert into Jugadores (tid, nid, nombre, apellido, correo, sexo, IDEquipo) values ('CC', '1000987654', 'Cristian David', 'Polo Garrido', 'crispo5124@gmail.com', 'Masculino', 'BAS009');
 insert into Jugadores (tid, nid, nombre, apellido, correo, sexo, IDEquipo) values ('CC', '1010123457', 'Samuel Felipe', 'Diaz Mamanche', 'samuel.diaz@gmail.com', 'Masculino', 'TEN205');
-insert into Jugadores (tid, nid, nombre, apellido, correo, sexo, IDEquipo) values ('TI', '1001234567', 'Maria Fernanda', 'Gonzalez Garcia', 'juango01@outlook.com', 'Femenino', 'FUT501');
+insert into Jugadores (tid, nid, nombre, apellido, correo, sexo, IDEquipo) values ('TI', '1001234567', 'Maria Fernanda', 'Gonzalez Garcia', 'margon562@outlook.com', 'Femenino', 'FUT501');
 
 --TelefonosPorJugador
 
@@ -318,15 +316,15 @@ insert into TelefonosPorJugador (tidJugador, nidJugador, telefono) values ('TI',
 
 --Encargados
 
-insert into Encargados (tidJugador, nidJugador, fechaContratacion, foto, estudios, aniosExperiencia, IDZona) values ('CC', '1010123456', TO_DATE('2014-08-30','YYYY-MM-DD'), 'https://www.Fotos/ArmandoMejia.jpg', 'Pregrado', 9, 'Bog001');
+insert into Encargados (tidJugador, nidJugador, fechaContratacion, foto, estudios, aniosExperiencia, IDZona) values ('CC', '1010123456', TO_DATE('2014-08-30','YYYY-MM-DD'), 'https://www.Fotos/ArmandoMejia.jpg', 'Pregrado', 9, 'BOG001');
 insert into Encargados (tidJugador, nidJugador, fechaContratacion, foto, estudios, aniosExperiencia, IDZona) values ('CC', '1000987654', TO_DATE('2020-11-03','YYYY-MM-DD'), 'https://www.cristianpolo/foto.jpg', 'Maestria', 3, 'BAQ003');
 insert into Encargados (tidJugador, nidJugador, fechaContratacion, foto, estudios, aniosExperiencia, IDZona) values ('CC', '1010123457', TO_DATE('2022-05-13','YYYY-MM-DD'), 'https://SamuelDiaz.png', 'Doctorado', 2, 'MED005');
 
 --Calificaciones
 
-insert into Calificaciones (tidJugador, nidJugador, calificacion, feedback) values ('CC', '1010123456', 4, 'Muy buen asesor pero se le forman filas prolongadas.');
-insert into Calificaciones (tidJugador, nidJugador, calificacion, feedback) values ('CC', '1000987654', 5, 'Excelente asesor, muy buen trabajo.');
-insert into Calificaciones (tidJugador, nidJugador, calificacion, feedback) values ('CC', '1010123457', 5, 'El asesor es muy bueno, se nota que ama su trabajo.');
+insert into Calificaciones (tidJugador, nidJugador, calificacion, feedback, tidEncargado, nidEncargado) values ('TI', '1001234567', 4, 'Muy buen asesor pero se le forman filas prolongadas.', 'CC', '1010123456');
+insert into Calificaciones (tidJugador, nidJugador, calificacion, feedback, tidEncargado, nidEncargado) values ('CC', '1000987654', 5, 'Excelente asesor, muy buen trabajo.', 'CC', '1010123457');
+insert into Calificaciones (tidJugador, nidJugador, calificacion, feedback, tidEncargado, nidEncargado) values ('CC', '1010123457', 5, 'El asesor es muy bueno, se nota que ama su trabajo.', 'CC', '1000987654');
 
 --Reservaciones
 
@@ -372,7 +370,7 @@ insert into EquiposJueganPartidos (IDEquipo, IDPartido) values ('FUT501', 'FUT58
 
 --Pagos
 --Nos va a saltar un error ya que el metodo de pago no esta en el rango de valores permitidos
-insert into Pagos (IDPago, estado, metodo, total, fechalimite) values ('534361251234', 'Aprobado', 'Paypal', 89000, TO_DATE('2024-04-01','YYYY-MM-DD'));
+insert into Pagos (IDPago, estado, metodo) values ('534361251234', 'Aprobado', 'Paypal');
 
 --Jugadores
 --Fallara ya que se esta haciendo referencia a un IDEquipo que no existe en la tabla Equipos
@@ -388,7 +386,7 @@ insert into Encargados (tidJugador, nidJugador, fechaContratacion, foto, estudio
 
 --Calificaciones
 --Nos va a saltar un error ya que la calificacion no esta en el rango de valores permitidos
-insert into Calificaciones (tidJugador, nidJugador, calificacion, feedback) values ('CC', '1010123456', 6, 'Muy buen asesor pero se le forman filas prolongadas.');
+insert into Calificaciones (tidJugador, nidJugador, calificacion, feedback, tidEncargado, nidEncargado) values ('CC', '1010123456', 6, 'Muy buen asesor pero se le forman filas prolongadas.', 'CC', '1010123456');
 
 --Reservaciones
 --Fallara porque el IDReserva debe ser unico por lo que es la llave primaria pero ya se encuentra en la tabla
@@ -397,7 +395,6 @@ insert into Reservaciones (IDReserva, estado, fechaSolicitud, fechaReservacion, 
 --AdicionalesPorReservaciones
 --Nos va a saltar un error ya que el IDAdicional no cumple con el formato establecido
 insert into AdicionalesPorReservaciones (IDAdicional, IDReserva) values ('A0101F', 'FUT001');
------------------------------------------------------------------------
 
 --Xpoblar
 
@@ -420,13 +417,164 @@ DELETE FROM Partidos
 
 //1. Consulta para obtener todos los jugadores de un equipo específico:
 
-SELECT Jugadores.nombre, Jugadores.apellido
+SELECT Jugadores.nombre, Jugadores.apellido, Equipos.nombre AS equipo
 FROM Jugadores
 JOIN Equipos ON Jugadores.IDEquipo = Equipos.IDEquipo
 WHERE Equipos.nombre = 'Real Madrid';
 
 //2. Consulta para obtener todas las jugadoras que sean de género femenino:
 
-SELECT nombre, apellido
+SELECT nombre, apellido, correo, sexo
 FROM Jugadores
 WHERE sexo = 'Femenino';
+
+--Tuplas
+
+ALTER TABLE Reservaciones ADD CONSTRAINT CK_Reservaciones_fechaSolicitud_fechaReservacion CHECK (fechaSolicitud <= fechaReservacion);
+
+--TuplasOK
+
+INSERT INTO Reservaciones (IDReserva, estado, fechaSolicitud, fechaReservacion, tiempoTotal, tidJugador, nidJugador, IDCancha, IDPartido, IDPago) VALUES ('FUT090', 'Procesando', TO_DATE('2024-04-10','YYYY-MM-DD'), TO_DATE('2024-04-11','YYYY-MM-DD'), '2:00 h', 'CC', '1010123456', 'FUT001', 'FUT534', '123456789101');
+
+--TuplasNoOK
+
+INSERT INTO Reservaciones (IDReserva, estado, fechaSolicitud, fechaReservacion, tiempoTotal, tidJugador, nidJugador, IDCancha, IDPartido, IDPago) VALUES ('FUT091', 'Cancelada', TO_DATE('2024-04-10','YYYY-MM-DD'), TO_DATE('2024-04-09','YYYY-MM-DD'), '2:00 h', 'CC', '1010123456', 'FUT001', 'FUT534', '123456789101');
+
+--Acciones
+
+/*
+
+ALTER TABLE Canchas ADD CONSTRAINT FK_Canchas_Tarifas FOREIGN KEY(idTarifa) REFERENCES Tarifas(IDTarifa);
+ALTER TABLE Canchas ADD CONSTRAINT FK_Canchas_ZonasDeportivas FOREIGN KEY(IDZona) REFERENCES ZonasDeportivas(IDZona) ON DELETE CASCADE;
+ALTER TABLE AdicionalesPorReservaciones ADD CONSTRAINT FK_AdicionalesPorReservaciones_Adicionales FOREIGN KEY(IDAdicional) REFERENCES Adicionales(IDAdicional) ON DELETE CASCADE;
+ALTER TABLE AdicionalesPorReservaciones ADD CONSTRAINT FK_AdicionalesPorReservaciones_Reservaciones FOREIGN KEY(IDReserva) REFERENCES Reservaciones(IDReserva) ON DELETE SET NULL;
+ALTER TABLE Reservaciones ADD CONSTRAINT FK_Reservaciones_Jugadores FOREIGN KEY(tidJugador, nidJugador) REFERENCES Jugadores(tid, nid) ON DELETE CASCADE;
+ALTER TABLE Reservaciones ADD CONSTRAINT FK_Reservaciones_Canchas FOREIGN KEY(IDCancha, IDZona) REFERENCES Canchas(IDCancha, IDZona) ON DELETE SET NULL;
+ALTER TABLE Reservaciones ADD CONSTRAINT FK_Reservaciones_Partidos FOREIGN KEY(IDPartido) REFERENCES Partidos(IDPartido) ON DELETE SET NULL;
+ALTER TABLE Reservaciones ADD CONSTRAINT FK_Reservaciones_Pagos FOREIGN KEY(IDPago) REFERENCES Pagos(IDPago) ON DELETE CASCADE;
+ALTER TABLE Encargados ADD CONSTRAINT FK_Encargados_Jugadores FOREIGN KEY(tidJugador, nidJugador) REFERENCES Jugadores(tid, nid) ON DELETE CASCADE;
+ALTER TABLE Encargados ADD CONSTRAINT FK_Encargados_ZonasDeportivas FOREIGN KEY(IDZona) REFERENCES ZonasDeportivas(IDZona);
+ALTER TABLE Calificaciones ADD CONSTRAINT FK_Calificaciones_Jugadores FOREIGN KEY(tidJugador, nidJugador) REFERENCES Jugadores(tid, nid) ON DELETE CASCADE;
+ALTER TABLE Calificaciones ADD CONSTRAINT FK_Calificaciones_Encargados FOREIGN KEY(tidEncargado, nidEncargado) REFERENCES Encargados(tidJugador, nidJugador) ON DELETE CASCADE;
+ALTER TABLE Jugadores ADD CONSTRAINT FK_Jugadores_Equipos FOREIGN KEY(IDEquipo) REFERENCES Equipos(IDEquipo) ON DELETE SET NULL;
+ALTER TABLE TelefonosPorJugador ADD CONSTRAINT FK_TelefonosPorJugador_Jugadores FOREIGN KEY(tidJugador, nidJugador) REFERENCES Jugadores(tid, nid) ON DELETE CASCADE;
+ALTER TABLE EquiposJueganPartidos ADD CONSTRAINT FK_EquiposJueganPartidos_Equipos FOREIGN KEY(IDEquipo) REFERENCES Equipos(IDEquipo) ON DELETE CASCADE;
+ALTER TABLE EquiposJueganPartidos ADD CONSTRAINT FK_EquiposJueganPartidos_Partidos FOREIGN KEY(IDPartido) REFERENCES Partidos(IDPartido) ON DELETE CASCADE;
+
+*/
+
+--Disparadores
+
+--Disparador para actualizar la cantidad de jugadores de un equipo cuando se inserta un nuevo jugador
+CREATE OR REPLACE TRIGGER trg_actualizar_cantidad_jugadores
+AFTER INSERT ON Jugadores
+FOR EACH ROW
+BEGIN
+    UPDATE Equipos
+    SET numeroIntegrantes = numeroIntegrantes + 1
+    WHERE IDEquipo = :NEW.IDEquipo;
+END;
+
+--DisparadorOK
+
+INSERT INTO Jugadores (tid, nid, nombre, apellido, correo, sexo, IDEquipo) VALUES ('CC', '1987654320', 'Melissa', 'Rios Carvajal', 'melissa.rios@gmail.com', 'Femenino', 'FUT501');
+
+SELECT * FROM Equipos
+
+--Disparador para actualizar la cantidad de jugadores de un equipo cuando se elimina un jugador
+CREATE OR REPLACE TRIGGER trg_actualizar_cantidad_jugadores
+AFTER DELETE ON Jugadores
+FOR EACH ROW
+BEGIN
+    UPDATE Equipos
+    SET numeroIntegrantes = numeroIntegrantes - 1
+    WHERE IDEquipo = :OLD.IDEquipo;
+END;
+
+--DisparadorOK
+
+DELETE FROM Jugadores
+WHERE tid = 'CC' AND nid = '1987654320';
+
+SELECT * FROM Equipos
+
+--Disparador para validar que la fecha de solicitud sea menor o igual a la fecha de reservación
+CREATE OR REPLACE TRIGGER trg_validar_fechas_reservacion
+BEFORE INSERT ON Reservaciones
+FOR EACH ROW
+BEGIN
+    IF :NEW.fechaSolicitud > :NEW.fechaReservacion THEN
+        RAISE_APPLICATION_ERROR(-20001, 'La fecha de solicitud debe ser menor o igual a la fecha de reservación.');
+    END IF;
+END;
+
+--DisparadorOK
+
+INSERT INTO Reservaciones (IDReserva, estado, fechaSolicitud, fechaReservacion, tiempoTotal, tidJugador, nidJugador, IDCancha, IDPartido, IDPago) VALUES ('FUT999', 'Cumplida', TO_DATE('2024-04-10','YYYY-MM-DD'), TO_DATE('2024-04-09','YYYY-MM-DD'), '2:00 h', 'CC', '1010123456', 'FUT001', 'FUT534', '123456789101');
+
+--Disparador para aumentar la cantidad de canchas en ZonasDeportivas cuando se crea una nueva Cancha
+CREATE OR REPLACE TRIGGER trg_aumentar_cantidad_canchas
+AFTER INSERT ON Canchas
+FOR EACH ROW
+BEGIN
+    UPDATE ZonasDeportivas
+    SET cantidadCanchas = cantidadCanchas + 1
+    WHERE IDZona = :NEW.IDZona;
+END;
+
+--DisparadorOK
+
+INSERT INTO Canchas (IDCancha, capacidadJugadores, estado, dimensiones, IDZona, descripcion, deporte, idTarifa) VALUES ('FUT133', 10, 'Activa', '25m * 7m', 'BOG001', 'Cancha sintetica de futbol 5 al aire libre', 'Futbol', 'FUT001');
+
+SELECT * FROM ZonasDeportivas
+
+--Disparador para disminuir la cantidad de canchas en ZonasDeportivas cuando se elimina una Cancha
+CREATE OR REPLACE TRIGGER trg_disminuir_cantidad_canchas
+AFTER DELETE ON Canchas
+FOR EACH ROW
+BEGIN
+    UPDATE ZonasDeportivas
+    SET cantidadCanchas = cantidadCanchas - 1
+    WHERE IDZona = :OLD.IDZona;
+END;
+
+--DisparadorOK
+
+DELETE FROM Canchas
+WHERE IDCancha = 'FUT133';
+
+SELECT * FROM ZonasDeportivas
+
+--Disparador para autoincrementar el valor de IDReserva
+CREATE OR REPLACE TRIGGER trg_autoincrementar_idreserva
+BEFORE INSERT ON Reservaciones
+FOR EACH ROW
+DECLARE
+    nuevoID Reservaciones.IDReserva%TYPE;
+BEGIN
+    --Generar el nuevo IDReserva
+    nuevoID := :NEW.IDReserva;
+    LOOP
+        --Verificar si el nuevo IDReserva ya existe en la tabla
+        SELECT COUNT(*)
+        INTO nuevoID
+        FROM Reservaciones
+        WHERE IDReserva = nuevoID;
+        
+        --Si el nuevo IDReserva no existe, salir del bucle
+        EXIT WHEN nuevoID = 0;
+        
+        --Obtener las primeras 3 letras del IDReserva actual
+        nuevoID := SUBSTR(nuevoID, 1, 3);
+        
+        --Obtener el número de 3 cifras del IDReserva actual
+        nuevoID := CONCAT(nuevoID, ((TO_NUMBER(SUBSTR(nuevoID, 4, 6)) + 1)));
+    END LOOP;
+    
+    --Asignar el nuevo IDReserva al registro a insertar
+    :NEW.IDReserva := nuevoID;
+END;
+
+--DisparadorOK
+
+// INSERT INTO Reservaciones (IDReserva, estado, fechaSolicitud, fechaReservacion, tiempoTotal, tidJugador, nidJugador, IDCancha, IDPartido, IDPago) VALUES ('FUT001', 'Procesando', TO_DATE('2024-04-10','YYYY-MM-DD'), TO_DATE('2024-04-11','YYYY-MM-DD'), '5:00 h', 'CC', '1010123456', 'FUT001', 'FUT534', '123456789101');
