@@ -1,0 +1,71 @@
+<!ELEMENT Tarifas (IDTarifa, IDCancha, IDZona, dia, horaInicio, horaFin, precio)>
+<!ELEMENT IDTarifa (#PCDATA)>
+<!ELEMENT IDCancha (#PCDATA)>
+<!ELEMENT IDZona (#PCDATA)>
+<!ELEMENT dia (#PCDATA)>
+<!ELEMENT horaInicio (#PCDATA)>
+<!ELEMENT horaFin (#PCDATA)>
+<!ELEMENT precio (#PCDATA)>
+
+<!ELEMENT Canchas (IDCancha, IDZona, capacidadJugadores, estado, dimensiones, deporte, descripcion)>
+<!ELEMENT capacidadJugadores (#PCDATA)>
+<!ELEMENT estado (#PCDATA)>
+<!ELEMENT dimensiones (#PCDATA)>
+<!ELEMENT deporte (#PCDATA)>
+<!ELEMENT descripcion (#PCDATA)>
+
+<!ELEMENT AdicionalesPorReservaciones (IDAdicional, IDReserva?)>
+<!ELEMENT IDAdicional (#PCDATA)>
+<!ELEMENT IDReserva (#PCDATA)>
+
+<!ELEMENT Adicionales (IDAdicional, nombre, cantidad, precio, disponibilidad)>
+<!ELEMENT nombre (#PCDATA)>
+<!ELEMENT cantidad (#PCDATA)>
+<!ELEMENT disponibilidad (#PCDATA)>
+
+<!ELEMENT Partidos (IDPartido, resultado)>
+<!ELEMENT resultado (#PCDATA)>
+
+<!ELEMENT Reservaciones (IDReserva, estado, fechaSolicitud, fechaReservacion, tiempoTotal, tidJugador, nidJugador, IDCancha?, IDZona?, IDPartido?, IDPago?)>
+<!ELEMENT fechaSolicitud (#PCDATA)>
+<!ELEMENT fechaReservacion (#PCDATA)>
+<!ELEMENT tiempoTotal (#PCDATA)>
+<!ELEMENT tidJugador (#PCDATA)>
+<!ELEMENT nidJugador (#PCDATA)>
+<!ELEMENT IDPago (#PCDATA)>
+
+<!ELEMENT Pagos (IDPago, estado, metodo)>
+<!ELEMENT metodo (#PCDATA)>
+
+<!ELEMENT ZonasDeportivas (IDZona, nombre, cantidadCanchas, direccion, descripcion?, area)>
+<!ELEMENT nombre (#PCDATA)>
+<!ELEMENT cantidadCanchas (#PCDATA)>
+<!ELEMENT direccion (#PCDATA)>
+<!ELEMENT area (#PCDATA)>
+
+<!ELEMENT Encargados (tidJugador, nidJugador, fechaContratacion, foto, estudios, experiencia, IDZona)>
+<!ELEMENT fechaContratacion (#PCDATA)>
+<!ELEMENT foto (#PCDATA)>
+<!ELEMENT estudios (#PCDATA)>
+<!ELEMENT experiencia (#PCDATA)>
+
+<!ELEMENT Calificaciones (tidJugador, nidJugador, calificacion, feedback, tidEncargado, nidEncargado)>
+<!ELEMENT calificacion (#PCDATA)>
+<!ELEMENT feedback (#PCDATA)>
+<!ELEMENT tidEncargado (#PCDATA)>
+<!ELEMENT nidEncargado (#PCDATA)>
+
+<!ELEMENT Jugadores (tid, nid, nombre, apellido, correo?, sexo, IDEquipo?)>
+<!ELEMENT nombre (#PCDATA)>
+<!ELEMENT apellido (#PCDATA)>
+<!ELEMENT correo (#PCDATA)>
+<!ELEMENT sexo (#PCDATA)>
+<!ELEMENT IDEquipo (#PCDATA)>
+
+<!ELEMENT TelefonosPorJugador (tidJugador, nidJugador, telefono)>
+<!ELEMENT telefono (#PCDATA)>
+
+<!ELEMENT Equipos (IDEquipo, nombre, numeroIntegrantes)>
+<!ELEMENT numeroIntegrantes (#PCDATA)>
+
+<!ELEMENT EquiposJueganPartidos (IDEquipo, IDPartido)>
